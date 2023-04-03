@@ -1,0 +1,312 @@
+# Setup
+import pygame
+import os
+import time 
+
+pygame.init()
+pygame.font.init()
+pygame.mixer.init()
+
+#Screen
+troopWidth, troopHeight = 100, 100
+redtowerWidth, redtowerHeight= 205,220
+bluetowerWidth, bluetowerHeight= 235,345
+width, height = 550, 730
+screen = pygame.display.set_mode((width, height))
+background = pygame.transform.scale(pygame.image.load('background.png'), (width, height))
+menuScreen = pygame.transform.scale(pygame.image.load('menuScreen.png'), (width, height))
+battle = pygame.transform.scale(pygame.image.load('battleImage.png'), (300, 125))
+pygame.display.set_caption("Elite Clashers")
+border = pygame.Rect(width,0,0,height)
+
+#Fonts
+deckFont = pygame.font.SysFont('swell', 15)
+winFont = pygame.font.SysFont('Swell', 90)
+towerFont = pygame.font.SysFont('Swell', 25)
+elxFont = pygame.font.SysFont('swell', 50)
+troopHealthFont = pygame.font.SysFont('Swell', 22)
+
+#Bullets and speed
+speed= 10
+maxBullets= 1
+bulletSpeed = 15
+
+# Deck cards and elixir
+blankDeckImage = pygame.transform.scale(pygame.image.load('blankDeck.png'),(140,60))
+
+giantCardImage= pygame.transform.scale(pygame.image.load('RoyalGiantCard Small.png'),(30,40))
+hogCardImage=  pygame.transform.scale(pygame.image.load('HogRiderCard Small.png'),(30,40))
+lumberCardImage=  pygame.transform.scale(pygame.image.load('LumberjackCard Small.png'),(30,40))
+musketeerCardImage=  pygame.transform.scale(pygame.image.load('MusketeerCard Small.png'),(30,40))
+knightCardImage=  pygame.transform.scale(pygame.image.load('KnightCard Small.png'),(30,40))
+wizardCardImage=  pygame.transform.scale(pygame.image.load('WizardCard Small.png'),(30,40))
+skeletonCardImage=  pygame.transform.scale(pygame.image.load('SkeletonsCard Small.png'),(30,40))
+goblinCardImage=  pygame.transform.scale(pygame.image.load('SpearGoblinsCard.png'),(30,40))
+
+emoteImage= pygame.transform.scale(pygame.image.load('emote.png'),(50,50))
+
+elxImage = pygame.transform.scale(pygame.image.load('elixir.png'), (30, 30))
+
+#Troops (GOBLIN TROOP = SKELETON TROOP)
+spearGoblinImage= pygame.transform.scale(pygame.image.load('spearGoblinImage.png'),(troopWidth, troopHeight))
+goblinImage= pygame.transform.scale(pygame.image.load('skeletonImage.png'),(troopWidth, troopHeight))
+
+#Towers
+blueTowerImage= pygame.transform.scale(pygame.image.load('blueTowerImage.png'),(bluetowerWidth, bluetowerHeight))
+redTowerImage= pygame.transform.scale(pygame.image.load('redTowerImage.png'),(redtowerWidth, redtowerHeight))
+
+#Sound effects
+spearSound = pygame.mixer.Sound('spear.wav')
+arrowSound = pygame.mixer.Sound('arrow.wav')
+battleStartSound = pygame.mixer.Sound('battleStart.wav')
+menuSound = pygame.mixer.Sound('menuSound.wav')
+soundTrack = pygame.mixer.Sound('soundTrack.wav')
+drawSound = pygame.mixer.Sound('drawSound.wav')
+winSound = pygame.mixer.Sound('winSound.wav')
+
+
+
+#Events
+spearGoblinHit = pygame.USEREVENT + 1
+goblinHit = pygame.USEREVENT + 2
+redTowerHit = pygame.USEREVENT + 3
+blueTowerHit = pygame.USEREVENT + 4
+
+#Display
+def window(redTowerImage, blueTowerImage, redTower, blueTower, goblin, spearGoblin, spearGoblinImage, goblinImage, spearGoblinBullet, goblinBullet, spearGoblinHealthValue, goblinHealthValue, blueKingTowerHealthValue, redKingTowerHealthValue, blueElxValue, redElxValue):
+    screen.blit(background, (0, 0))
+
+
+    #Deck
+    screen.blit(blankDeckImage, (400, 0))
+    screen.blit(blankDeckImage, (400, 670))
+
+    screen.blit(giantCardImage, (405, 10))
+    screen.blit(lumberCardImage, (437, 10))
+    screen.blit(musketeerCardImage, (472, 10))
+    screen.blit(skeletonCardImage, (505, 675))
+    screen.blit(hogCardImage, (405, 680))
+    screen.blit(knightCardImage, (437, 680))
+    screen.blit(wizardCardImage, (472, 680))
+    screen.blit(goblinCardImage, (505, 15))
+
+    #Troops
+    screen.blit(goblinImage, (goblin.x, goblin.y))
+    screen.blit(spearGoblinImage, (spearGoblin.x, spearGoblin.y))
+
+    #Towers
+    screen.blit(redTowerImage, (redTower.x,redTower.y))
+    screen.blit(blueTowerImage, (blueTower.x, blueTower.y))
+
+    #Healths
+    blueKingTowerHealth = towerFont.render(str(blueKingTowerHealthValue), True, (255, 255, 255))
+    redKingTowerHealth = towerFont.render(str(redKingTowerHealthValue), True, (255, 255, 255))
+
+    spearGoblinHealth = troopHealthFont.render(str(spearGoblinHealthValue), True, (255, 255, 255))
+    goblinHealth = troopHealthFont.render(str(goblinHealthValue), True, (255, 255, 255))
+
+    screen.blit(spearGoblinHealth, pygame.draw.rect(screen, (255, 0, 0), (spearGoblin.x+25, spearGoblin.y + spearGoblinImage.get_height() - 115, spearGoblinImage.get_width()//2, 10)))
+    screen.blit(spearGoblinHealth, pygame.draw.rect(screen, (0, 175, 0), (spearGoblin.x+25, spearGoblin.y + spearGoblinImage.get_height() - 115, spearGoblinImage.get_width()//2 * (spearGoblinHealthValue / 15), 10)))
+
+    screen.blit(goblinHealth, pygame.draw.rect(screen, (255, 0, 0),(goblin.x+30, goblin.y + goblinImage.get_height() +5, goblinImage.get_width()//2, 10)))
+    screen.blit(goblinHealth, pygame.draw.rect(screen, (0, 175, 0), (goblin.x+30, goblin.y + goblinImage.get_height() +5, goblinImage.get_width()//2 * (goblinHealthValue / 15), 10)))
+
+    screen.blit(blueKingTowerHealth, pygame.draw.rect(screen, (255, 0, 0), (blueTower.x+60, blueTower.y + blueTowerImage.get_height() -175, blueTowerImage.get_width()//2, 10)))
+    screen.blit(blueKingTowerHealth, pygame.draw.rect(screen, (0, 175, 0), (blueTower.x+60, blueTower.y + blueTowerImage.get_height() -175, blueTowerImage.get_width()//2 * (blueKingTowerHealthValue / 25), 10)))
+
+    screen.blit(redKingTowerHealth, pygame.draw.rect(screen, (255, 0, 0), (redTower.x+50, redTower.y + redTowerImage.get_height()  -195, redTowerImage.get_width()//2, 10)))
+    screen.blit(redKingTowerHealth, pygame.draw.rect(screen, (0, 175, 0), (redTower.x+50, redTower.y + redTowerImage.get_height()  -195, redTowerImage.get_width()//2 * (redKingTowerHealthValue / 25), 10)))
+
+    #Elixir
+    blueElx = elxFont.render(str(blueElxValue), True, (255, 0, 255))
+    redElx = elxFont.render(str(redElxValue), True, (255, 0, 255))
+    screen.blit(redElx, (40, 0))
+    screen.blit(elxImage, (0, 0))
+    screen.blit(blueElx, (40, 695))
+    screen.blit(elxImage, (0, 695))
+
+    #Bullets
+    for bullet in spearGoblinBullet:
+        pygame.draw.rect(screen, (255, 0, 255), bullet)
+
+    for bullet in goblinBullet:
+        pygame.draw.rect(screen, (255, 0, 255), bullet)
+
+    pygame.display.update()
+
+#Movement
+def spearGoblinMove(keysPressed, spearGoblin):
+    if keysPressed[pygame.K_a] and spearGoblin.x - speed > 30:  # LEFT
+        spearGoblin.x -= speed
+    if keysPressed[pygame.K_d] and spearGoblin.x + speed + spearGoblin.width < border.x - 20:  # RIGHT
+        spearGoblin.x += speed
+    if keysPressed[pygame.K_w] and spearGoblin.y - speed > 80:  # UP
+        spearGoblin.y -= speed
+    if keysPressed[pygame.K_s] and spearGoblin.y + speed + spearGoblin.height < height - 375:  # DOWN
+        spearGoblin.y += speed
+
+def goblinMove(keysPressed, goblin):
+    if keysPressed[pygame.K_LEFT] and goblin.x - speed > 30:  # LEFT
+        goblin.x -= speed
+    if keysPressed[pygame.K_RIGHT] and goblin.x + speed + goblin.width < border.x-20:  # RIGHT
+        goblin.x += speed
+    if keysPressed[pygame.K_UP] and goblin.y - speed > 350:  # UP
+        goblin.y -= speed
+    if keysPressed[pygame.K_DOWN] and goblin.y + speed + goblin.height < height - 100:  # DOWN
+        goblin.y += speed
+
+
+#Bullet event
+def shooting(redTower, blueTower, spearGoblinBullet, goblinBullet, spearGoblin, goblin):
+    for bullet in spearGoblinBullet:
+        bullet.y += bulletSpeed
+        if goblin.colliderect(bullet):
+            pygame.event.post(pygame.event.Event(goblinHit))
+            spearGoblinBullet.remove(bullet)
+        elif blueTower.colliderect(bullet):
+            pygame.event.post(pygame.event.Event(blueTowerHit))
+            spearGoblinBullet.remove(bullet)
+        elif bullet.y > height:
+            spearGoblinBullet.remove(bullet)
+
+    for bullet in goblinBullet:
+        bullet.y -= bulletSpeed
+        if spearGoblin.colliderect(bullet):
+            pygame.event.post(pygame.event.Event(spearGoblinHit))
+            goblinBullet.remove(bullet)
+        elif redTower.colliderect(bullet):
+            pygame.event.post(pygame.event.Event(redTowerHit))
+            goblinBullet.remove(bullet)
+        elif bullet.y < 0:
+            goblinBullet.remove(bullet)
+
+
+
+#Main Loop fucntion
+def main():
+    time.sleep(1)
+    #Sounds
+    battleStartSound.play()
+    soundTrack.play()
+
+    # Main function
+    spearGoblin = pygame.Rect(245, 165, troopWidth, troopHeight)
+    goblin = pygame.Rect(240, 455, troopWidth, troopHeight)
+
+    redTower = pygame.Rect(175, -25, redtowerWidth-30, redtowerHeight-80)
+    blueTower = pygame.Rect(158, 545, bluetowerWidth-35, bluetowerHeight+200)
+
+    # Bullet amount
+    spearGoblinBullet = []
+    goblinBullet = []
+
+    blueElxValue = 50
+    redElxValue = 50
+
+    # Health values
+    spearGoblinHealthValue = 15
+    goblinHealthValue = 15
+
+    blueKingTowerHealthValue = 25
+    redKingTowerHealthValue = 25
+
+    clock = pygame.time.Clock()
+    run = True
+    while run:
+        clock.tick(60)
+
+        for event in pygame.event.get():
+            if event.type == pygame.QUIT:
+                run = False
+                pygame.quit()
+
+
+        #Bullet shot
+            if event.type == pygame.KEYDOWN:
+                if event.key == pygame.K_LSHIFT and len(spearGoblinBullet) < maxBullets and redElxValue>0:
+                    redElxValue -= 1
+                    bullet = pygame.Rect(spearGoblin.x + 5, spearGoblin.y + spearGoblin.height//2 -40, 5, 20)
+                    spearGoblinBullet.append(bullet)
+                    spearSound.play()
+
+                if event.key == pygame.K_RSHIFT and len(goblinBullet) < maxBullets and blueElxValue>0:
+                    blueElxValue -= 1
+                    bullet = pygame.Rect(goblin.x +25, goblin.y + goblin.height//2 -10, 5, 20)
+                    goblinBullet.append(bullet)
+                    arrowSound.play()
+
+            if event.type == spearGoblinHit:
+                spearGoblinHealthValue -= 1
+
+            if event.type == goblinHit:
+                goblinHealthValue -= 1
+
+            if event.type == redTowerHit:
+                redKingTowerHealthValue -= 1
+
+            if event.type == blueTowerHit:
+                blueKingTowerHealthValue -= 1
+
+
+        #Game End
+        winner = ""
+        if blueKingTowerHealthValue <= 0 or goblinHealthValue <= 0:
+            winner = "RED WINS!"
+        if redKingTowerHealthValue <= 0 or spearGoblinHealthValue <= 0:
+            winner = "BLUE WINS!"
+        if blueElxValue <=0 and redElxValue <= 0 and len(goblinBullet) < maxBullets and len(spearGoblinBullet) < maxBullets:
+            if spearGoblinHealthValue + redKingTowerHealthValue >= goblinHealthValue + blueKingTowerHealthValue:
+                winner = "RED WINS!"
+            if goblinHealthValue + blueKingTowerHealthValue >= spearGoblinHealthValue + redKingTowerHealthValue:
+                winner = "BLUE WINS!"
+            if goblinHealthValue + blueKingTowerHealthValue == spearGoblinHealthValue + redKingTowerHealthValue:
+                winner = "DRAW!"
+
+        if winner == "BLUE WINS!":
+            soundTrack.stop()
+            winSound.play()
+            winText = winFont.render(str(winner), True, (0, 0, 200))
+            screen.blit(winText, (100, 340))
+            pygame.display.update()
+            pygame.time.delay(10000)
+            break
+        if winner == "RED WINS!":
+            soundTrack.stop()
+            winSound.play()
+            winText = winFont.render(str(winner), True, (200, 0, 0))
+            screen.blit(winText, (110, 340))
+            pygame.display.update()
+            pygame.time.delay(10000)
+            break
+        if winner == "DRAW!":
+            soundTrack.stop()
+            drawSound.play()
+            winText = winFont.render(str(winner), True, (255, 255, 255))
+            screen.blit(winText, (170, 340))
+            pygame.display.update()
+            pygame.time.delay(6000)
+            break
+
+        keysPressed = pygame.key.get_pressed()
+        spearGoblinMove(keysPressed, spearGoblin)
+        goblinMove(keysPressed, goblin)
+        shooting(redTower, blueTower, spearGoblinBullet, goblinBullet, spearGoblin, goblin)
+        window(redTowerImage, blueTowerImage, redTower, blueTower, goblin, spearGoblin,  spearGoblinImage, goblinImage, spearGoblinBullet, goblinBullet, spearGoblinHealthValue, goblinHealthValue,  blueKingTowerHealthValue, redKingTowerHealthValue, blueElxValue, redElxValue)
+
+#Main Menu
+def menu():
+    menuSound.play()
+    run = True
+    while run:
+        screen.blit(menuScreen, (0,0))
+        screen.blit(battle, (130,70))
+        pygame.display.update()
+        for event in pygame.event.get():
+            if event.type == pygame.QUIT:
+                run = False
+            if event.type == pygame.MOUSEBUTTONDOWN:
+                menuSound.stop()
+                main()
+    pygame.quit()
+
+menu()
